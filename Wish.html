@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Birthday Surprise 🎉</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background: radial-gradient(circle at bottom, #020024, #090979, #000);
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            text-align: center;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 3;
+            top: 40%;
+            transform: translateY(-50%);
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            margin-bottom: 15px;
+        }
+
+        #countdown {
+            font-size: 2.2rem;
+            color: gold;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 14px 28px;
+            font-size: 17px;
+            border: none;
+            border-radius: 12px;
+            background: #ff4b5c;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 75, 92, 0.8);
+        }
+
+        button:hover {
+            background: #ff1f3d;
+        }
+
+        #wish {
+            font-size: 2.4rem;
+            margin-top: 20px;
+            display: none;
+            animation: pop 1s ease forwards;
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Cake */
+        #cake {
+            margin: 25px auto;
+            width: 180px;
+            display: none;
+            cursor: pointer;
+        }
+
+        #cakeText {
+            display: none;
+            margin-top: 10px;
+            font-size: 1.1rem;
+            color: #ffd700;
+        }
+
+        /* Slideshow */
+        #slideshow {
+            display: none;
+            margin: 25px auto;
+            width: 240px;
+            height: 240px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        #slideshow img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            animation: fade 1s ease;
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Share */
+        #shareBtn {
+            display: none;
+            margin-top: 20px;
+            background: #25D366;
+            box-shadow: 0 0 12px rgba(37, 211, 102, 0.7);
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="fireworks"></canvas>
+
+    <!-- Background Music -->
+    <audio id="bgMusic" loop>
+        <source src="https://cdn.pixabay.com/audio/2022/10/20/audio_5c1a1df2a5.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="container">
+        <h1>🎁 A Special Surprise Awaits!</h1>
+        <button id="startBtn">Open</button>
+        <div id="countdown"></div>
+
+        <div id="wish"></div>
+
+        <!-- <img id="cake" src="https://cdn-icons-png.flaticon.com/512/3176/3176363.png" alt="Cake"> -->
+        <img id="cake" src="cake.png" alt="Cake">
+
+
+        <div id="cakeText">🎂 Tap the cake to cut it!</div>
+
+        <div id="slideshow"></div>
+
+        <!-- <button id="shareBtn">📲 Share This Surprise</button> -->
+    </div>
+
+    <script>
+        /* ---------------- NAME FROM URL ---------------- */
+        const params = new URLSearchParams(window.location.search);
+        const name = params.get("name") || "My Friend";
+
+        /* ---------------- ELEMENTS ---------------- */
+        const btn = document.getElementById("startBtn");
+        const countdownEl = document.getElementById("countdown");
+        const wishEl = document.getElementById("wish");
+        const cake = document.getElementById("cake");
+        const cakeText = document.getElementById("cakeText");
+        const slideshow = document.getElementById("slideshow");
+        const shareBtn = document.getElementById("shareBtn");
+        const bgMusic = document.getElementById("bgMusic");
+
+        /* ---------------- BUTTON + COUNTDOWN ---------------- */
+        btn.onclick = () => {
+            btn.style.display = "none";
+            let count = 3;
+            countdownEl.textContent = count;
+            const timer = setInterval(() => {
+                count--;
+                if (count === 0) {
+                    clearInterval(timer);
+                    countdownEl.style.display = "none";
+                    showWish();
+                } else {
+                    countdownEl.textContent = count;
+                }
+            }, 1000);
+        };
+
+        function showWish() {
+            wishEl.innerHTML = `🎉 Happy Birthday, ${name}! 🎂<br>May your life shine as bright as these fireworks! ✨`;
+            wishEl.style.display = "block";
+
+            cake.style.display = "block";
+            cakeText.style.display = "block";
+
+            startFireworks();
+            startConfetti();
+            bgMusic.play().catch(() => { });
+        }
+
+        /* ---------------- CAKE CUT ---------------- */
+        cake.onclick = () => {
+            // cake.src = "https://cdn-icons-png.flaticon.com/512/992/992703.png";
+            cake.src = cake.png;
+            cakeText.textContent = "🍰 Cake cut! Sweet wishes coming your way!";
+            startSlideshow();
+        };
+
+        /* ---------------- SLIDESHOW ---------------- */
+        const photos = ["1.jpg", "2.jpg", "3.jpg",
+            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e",
+            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+            "https://images.unsplash.com/photo-1499084732479-de2c02d45fc4"
+        ];
+
+        let slideIndex = 0;
+
+        function startSlideshow() {
+            slideshow.style.display = "block";
+            showSlide();
+            setInterval(showSlide, 2500);
+        }
+
+        function showSlide() {
+            slideshow.innerHTML = `<img src="${photos[slideIndex]}" />`;
+            slideIndex = (slideIndex + 1) % photos.length;
+        }
+
+        /* ---------------- CONFETTI ---------------- */
+        function startConfetti() {
+            for (let i = 0; i < 250; i++) {
+                const confetti = document.createElement("div");
+                confetti.style.position = "fixed";
+                confetti.style.width = "8px";
+                confetti.style.height = "8px";
+                confetti.style.background = `hsl(${Math.random() * 360},100%,50%)`;
+                confetti.style.left = Math.random() * 100 + "vw";
+                confetti.style.top = "-10px";
+                confetti.style.borderRadius = "50%";
+                confetti.style.zIndex = 999;
+                confetti.style.animation = `fall ${3 + Math.random() * 3}s linear forwards`;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 6000);
+            }
+        }
+
+        const style = document.createElement("style");
+        style.innerHTML = `
+@keyframes fall {
+  to {
+    transform: translateY(110vh) rotate(360deg);
+    opacity: 0;
+  }
+}`;
+        document.head.appendChild(style);
+
+        /* ---------------- FIREWORKS CANVAS ---------------- */
+        const canvas = document.getElementById("fireworks");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.onresize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+
+        class Firework {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height;
+                this.targetY = Math.random() * canvas.height / 2;
+                this.speed = 4 + Math.random() * 3;
+                this.exploded = false;
+                this.particles = [];
+            }
+
+            update() {
+                if (!this.exploded) {
+                    this.y -= this.speed;
+                    if (this.y <= this.targetY) {
+                        this.exploded = true;
+                        this.explode();
+                    }
+                } else {
+                    this.particles.forEach(p => p.update());
+                }
+            }
+
+            draw() {
+                if (!this.exploded) {
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(this.x, this.y, 2, 10);
+                } else {
+                    this.particles.forEach(p => p.draw());
+                }
+            }
+
+            explode() {
+                const count = 35 + Math.random() * 25;
+                for (let i = 0; i < count; i++) {
+                    this.particles.push(new Particle(this.x, this.y));
+                }
+            }
+        }
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.angle = Math.random() * Math.PI * 2;
+                this.speed = Math.random() * 5 + 2;
+                this.gravity = 0.05;
+                this.alpha = 1;
+                this.color = `hsl(${Math.random() * 360},100%,60%)`;
+            }
+
+            update() {
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                this.alpha -= 0.02;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        let fireworks = [];
+        let animationRunning = false;
+
+        function startFireworks() {
+            if (animationRunning) return;
+            animationRunning = true;
+            setInterval(() => {
+                fireworks.push(new Firework());
+            }, 700);
+            animate();
+        }
+
+        function animate() {
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            fireworks.forEach((fw, i) => {
+                fw.update();
+                fw.draw();
+                if (fw.exploded && fw.particles.every(p => p.alpha <= 0)) {
+                    fireworks.splice(i, 1);
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        /* ---------------- SHARE BUTTON ---------------- */
+        shareBtn.onclick = () => {
+            const link = window.location.href;
+            const msg = `🎉 I made a birthday surprise for you! Open this: ${link}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+        };
+
+        function showShare() {
+            shareBtn.style.display = "inline-block";
+        }
+
+        setTimeout(showShare, 8000);
+    </script>
+
+</body>
+
+</html>
